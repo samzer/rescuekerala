@@ -7,6 +7,43 @@
 <h2 class="text-center">സഹായം അഭ്യര്‍ഥിക്കാന്‍</h2>
 
 <div class="container-fluid">
+  <div class="row">
+
+  <div class="form-group col-md-3">
+    <label for="district-filter">District:</label>
+    <select class="form-control" id="district-filter">
+        <option value='all'>All</option>
+        <option value='alp'> Alappuzha - ആലപ്പുഴ</option>
+        <option value='ekm'>Ernakulam - എറണാകുളം</option>
+        <option value='idk'>Idukki - ഇടുക്കിം</option>
+        <option value='knr'>Kannur - കണ്ണൂർം</option>
+        <option value='ksr'>Kasaragod - കാസർഗോഡ്ം</option>
+        <option value='kol'>Kollam - കൊല്ലംം</option>
+        <option value='ktm'>Kottayam - കോട്ടയംം</option>
+        <option value='koz'>Kozhikode - കോഴിക്കോട്ം</option>
+        <option value='mpm'>Malappuram - മലപ്പുറംം</option>
+        <option value='pkd'>Palakkad - പാലക്കാട്ം</option>
+        <option value='ptm'>Pathanamthitta - പത്തനംതിട്ടം</option>,
+        <option value='tvm'>Thiruvananthapuram - തിരുവനന്തപുരംം</option>
+        <option value='tcr'>Thrissur - തൃശ്ശൂർം</option>
+        <option value='wnd'>Wayanad - വയനാട്ം</option>
+    </select>
+  </div>
+    <div class="form-group col-md-3">
+    <label for="duration-filter">Duration:</label>
+      <select class="form-control" id="duration-filter">
+        <option value='all'>All</option>
+        <option value='last_1_hr'>Last 1 Hour</option>
+        <option value='last_3_hrs'>Last 3 Hours</option>
+        <option value='last_6_hrs'>Last 6 Hours</option>
+        <option value='last_12_hrs'>Last 12 Hoursം</option>
+        <option value='last_24_hrs'>Last 24 Hoursം</option>
+        <option value='last_3_days'>Last 3 Days</option>
+        <option value='last_7_days'>Last 7 Days</option>
+      </select>
+  </div>
+</div>
+
   <div class="col-md-6">
     <div class="row">
       <div id="chart-district" style="min-width: 400px; height: 400px; margin: 0 auto">
@@ -48,11 +85,13 @@ var gDistrictKV = {
   'tvm':'Thiruvananthapuram - തിരുവനന്തപുരം',
   'tcr':'Thrissur - തൃശ്ശൂർ',
   'wnd':'Wayanad - വയനാട്',
-}
+},
+gDurationFilter = 'all',
+gDistrictFilter = 'all';
 
 
   function getDistrictData(){
-    var url = "/api/1/request-dashboard/district/";
+    var url = "/api/1/request-dashboard/district/?district=" + gDistrictFilter + '&duration=' + gDurationFilter;
 
     $.ajax({
       type: 'GET',
@@ -114,7 +153,7 @@ var gDistrictKV = {
 
 
   function getLocationData(){
-    var url = "/api/1/request-dashboard/location/";
+    var url = "/api/1/request-dashboard/location/?district=" + gDistrictFilter  + '&duration=' + gDurationFilter;
 
     $.ajax({
       type: 'GET',
@@ -175,13 +214,14 @@ var gDistrictKV = {
   }
 
   function getMapData(){
-    var url = "/api/1/request-dashboard/map/";
+    var url = "/api/1/request-dashboard/map/?district=" + gDistrictFilter  + '&duration=' + gDurationFilter;
 
     $.ajax({
       type: 'GET',
       url: url,
     })
     .done(function(data) {
+      console.log(data);
       displayMap(data);
     })
     .fail(function(xhr, errmsg, err) {
@@ -232,8 +272,7 @@ function displayMap(data){
 
     }
 
-    // When a click event occurs near a place, open a popup at the location of
-    // the feature, with HTML description from its properties
+
     map.on('click', function(e) {
       var features = map.queryRenderedFeatures(e.point);
       // if the features have no info, return nothing
@@ -244,7 +283,6 @@ function displayMap(data){
       var feature = features[0];
 
       // Populate the popup and set its coordinates
-      // based on the feature found
       var popup = new mapboxgl.Popup()
       .setLngLat(feature.geometry.coordinates)
       .setHTML('<div id=\'popup\' class=\'popup\' style=\'z-index: 10;\'> <h5> Detail: </h5>' +
@@ -253,17 +291,31 @@ function displayMap(data){
       '<li class=\'list-group-item\'> <b>Location:</b> ' + feature.properties['location'] + ' </li>' +
       '<li class=\'list-group-item\'><b> GPS Accuracy:</b> ' + feature.properties['accuracy'] + ' </li>' +
       '<li class=\'list-group-item\'> <a href="/request_details/' + feature.properties['id'] + '/"> More details> </a> </li>' +
-
-      // '<li class=\'list-group-item\'> Vehicle Count: ' + feature.properties['8HrVehVol'] + ' </li>' +
-      // '<li class=\'list-group-item\'> Pedestrian Count: ' + feature.properties['8HrPedVol'] + ' </li>' +
       '</ul></div>')
       .addTo(map);
     });
-
-
-
   });
 }
+
+/**************
+** Events
+**************/
+$('#district-filter').change(function(d) {
+  gDistrictFilter = $(this).val();
+
+  getDistrictData();
+  getLocationData();
+  getMapData();
+});
+
+$('#duration-filter').change(function(d) {
+  gDurationFilter = $(this).val();
+
+  getDistrictData();
+  getLocationData();
+  getMapData();
+});
+
 
 getDistrictData();
 getLocationData();

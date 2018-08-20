@@ -1,7 +1,7 @@
 version: '3'
 
 services:
-  
+
   db:
     image: postgres
     restart: always
@@ -14,13 +14,14 @@ services:
     build: .
     restart: always
     environment:
-      ALLOWED_HOSTS: localhost 
+      ALLOWED_HOSTS: localhost
       SECRET_KEY: abcd
       DEBUG: "True"
       SENTRY_DSN: ""
       B_DATABASE_URL: postgres://postgres:@db:5432/postgres
       REDIS_URL: redis://redis:6379
       WAIT_FOR: db:5432,redis:6379
+      MAPBOX_ACCESS_KEY: "<Add-your-own>"
     command: ./run_dev_server.sh
     volumes:
       - .:/code
@@ -29,4 +30,3 @@ services:
     depends_on:
       - db
       - redis
-      

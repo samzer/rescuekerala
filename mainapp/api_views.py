@@ -3,8 +3,9 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import serializers
-from .models import RescueCamp, Person
+from .models import RescueCamp, Person, districts
 from django.db import connection
+from datetime import datetime, timedelta
 
 
 class RescueCampSerializer(serializers.ModelSerializer):
@@ -91,19 +92,96 @@ def execute_query(query):
     return result
 
 
+class DurationFilter:
+    @staticmethod
+    def get_interval_value(id):
+        duration_dict = {
+            'last_1_hr' : "interval '1 hour'",
+            'last_3_hrs' : "interval '3 hours'",
+            'last_6_hrs' : "interval '6 hours'",
+            'last_12_hrs' : "interval '12 hours'",
+            'last_24_hrs' : "interval '24 hours'",
+            'last_3_days' : "interval '3 days'",
+            'last_7_days' : "interval '7 days'"
+        }
+
+        return duration_dict[id]
+
+    @staticmethod
+    def get_list():
+        duration_dict = [
+            'last_1_hr',
+            'last_3_hrs',
+            'last_6_hrs',
+            'last_12_hrs',
+            'last_24_hrs',
+            'last_3_days',
+            'last_7_days',
+        ]
+
+        return duration_dict
+
+    @staticmethod
+    def get_timedelta_value(id):
+        duration_dict = {
+            'last_1_hr' : timedelta(hours=1),
+            'last_3_hrs' : timedelta(hours=3),
+            'last_6_hrs' : timedelta(hours=6),
+            'last_12_hrs' : timedelta(hours=12),
+            'last_24_hrs' : timedelta(hours=24),
+            'last_3_days' : timedelta(days=3),
+            'last_7_days' : timedelta(days=7),
+        }
+
+        return duration_dict[id]
+
+
+
 class RequestDashboardDistrictAPI(APIView):
     permission_classes = ()
     http_method_names = ['get']
 
     def get(self, request):
+        try:
+            # Get the filter parameters from the request
+            params = request.query_params
+
+            if 'district' in params:
+                district = params['district']
+                district_list = [ d[0] for d in districts ]
+
+                if district  == 'all':
+                    district = None
+
+                if district and (district not in district_list):
+                    raise ValueError('Invalid district')
+            else:
+                district = None
+
+            if 'duration' in params:
+                duration = params['duration']
+                duration_list = [ d[0] for d in districts ]
+
+                if duration  == 'all':
+                    duration = None
+
+                if duration and (duration not in DurationFilter.get_list()):
+                    raise ValueError('Invalid duration')
+            else:
+                duration = None
+        except Exception as e:
+            return Response("Error: %s" % e, status=status.HTTP_400_BAD_REQUEST)
 
         query = '''
         select district,
             count(*) as count
         from mainapp_request
+        where dateadded > now() - %s %s
         group by district
         order by count(*) DESC
-        '''
+        ''' % ( DurationFilter.get_interval_value(duration)  if duration else DurationFilter.get_interval_value('last_7_days'),
+        "and district='%s'" % (district)  if district else "",
+        )
 
         result = execute_query(query)
 
@@ -114,15 +192,48 @@ class RequestDashboardLocationAPI(APIView):
     http_method_names = ['get']
 
     def get(self, request):
+        try:
+            # Get the filter parameters from the request
+            params = request.query_params
+
+            if 'district' in params:
+                district = params['district']
+                district_list = [ d[0] for d in districts ]
+
+                if district  == 'all':
+                    district = None
+
+                if district and (district not in district_list):
+                    raise ValueError('Invalid district')
+            else:
+                district = None
+
+            if 'duration' in params:
+                duration = params['duration']
+                duration_list = [ d[0] for d in districts ]
+
+                if duration  == 'all':
+                    duration = None
+
+                if duration and (duration not in DurationFilter.get_list()):
+                    raise ValueError('Invalid duration')
+            else:
+                duration = None
+        except Exception as e:
+            return Response("Error: %s" % e, status=status.HTTP_400_BAD_REQUEST)
+
 
         query = '''
         select location,
             count(*) as count
         from mainapp_request
+        where dateadded > now() - %s %s
         group by location
         order by count(*) DESC
         limit 10
-        '''
+        ''' % ( DurationFilter.get_interval_value(duration)  if duration else DurationFilter.get_interval_value('last_7_days'),
+        "and district='%s'" % (district)  if district else "",
+        )
 
         result = execute_query(query)
 
@@ -140,6 +251,47 @@ class RequestDashboardMapAPI(APIView):
     http_method_names = ['get']
 
     def get(self, request):
-        result = Request.objects.all()[:300]
+        try:
+            # Get the filter parameters from the request
+            params = request.query_params
+
+            if 'district' in params:
+                district = params['district']
+                district_list = [ d[0] for d in districts ]
+
+                if district  == 'all':
+                    district = None
+
+                if district and (district not in district_list):
+                    raise ValueError('Invalid district')
+            else:
+                district = None
+
+            if 'duration' in params:
+                duration = params['duration']
+                duration_list = [ d[0] for d in districts ]
+
+                if duration  == 'all':
+                    duration = None
+
+                if duration and (duration not in DurationFilter.get_list()):
+                    raise ValueError('Invalid duration')
+            else:
+                duration = None
+        except Exception as e:
+            return Response("Error: %s" % e, status=status.HTTP_400_BAD_REQUEST)
+
+        result = None
+        if district: result = Request.objects.filter(district=district)[:1000]
+
+        if district and duration:
+            result = result.filter(dateadded__gte=datetime.now() -
+                                    DurationFilter.get_timedelta_value(duration), district=district)[:1000]
+        if district: result = Request.objects.filter(district=district)[:1000]
+        if duration: result = Request.objects.filter(dateadded__gte=datetime.now() -
+                                    DurationFilter.get_timedelta_value(duration))
+        if not result:
+            result = Request.objects.all()[:1000]
+
         serializer = RequestDashboardMapSerializer(result, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
