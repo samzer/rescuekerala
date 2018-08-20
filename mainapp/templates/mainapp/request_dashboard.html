@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% load bootstrap3 %}
+{% load static %}
+
+{% block content %}
+<h1 class="text-center">Request Dashboard</h1>
+<h2 class="text-center">സഹായം അഭ്യര്‍ഥിക്കാന്‍</h2>
+
+<div class="container-fluid">
+  <div class="col-md-6">
+    <div class="row">
+      <div id="chart-district" style="min-width: 400px; height: 400px; margin: 0 auto">
+
+      </div>
+    </div>
+    <div class="row">
+      Location Chart
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="row">
+      Map
+    </div>
+  </div>
+
+</div>
+
+<script src="https://code.highcharts.com/highcharts.src.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script type="text/javascript">
+/**************
+** FUNCTIONS
+**************/
+var gDistrictKV = {
+  'alp':'Alappuzha - ആലപ്പുഴ',
+  'ekm':'Ernakulam - എറണാകുളം',
+  'idk':'Idukki - ഇടുക്കി',
+  'knr':'Kannur - കണ്ണൂർ',
+  'ksr':'Kasaragod - കാസർഗോഡ്',
+  'kol':'Kollam - കൊല്ലം',
+  'ktm':'Kottayam - കോട്ടയം',
+  'koz':'Kozhikode - കോഴിക്കോട്',
+  'mpm':'Malappuram - മലപ്പുറം',
+  'pkd':'Palakkad - പാലക്കാട്',
+  'ptm':'Pathanamthitta - പത്തനംതിട്ട',
+  'tvm':'Thiruvananthapuram - തിരുവനന്തപുരം',
+  'tcr':'Thrissur - തൃശ്ശൂർ',
+  'wnd':'Wayanad - വയനാട്',
+}
+  // Metric Dashboard Filter//
+  function getDistrictData(){
+    var url = "/api/1/request-dashboard/district/";
+
+    $.ajax({
+      type: 'GET',
+      url: url,
+    })
+    .done(function(data) {
+        displayDistrictData(data);
+    })
+    .fail(function(xhr, errmsg, err) {
+      console.log("There was an error while getting data");
+    });
+  }
+
+
+  function displayDistrictData(data) {
+    var seriesData = [];
+
+    for(var i in data){
+      seriesData.push(
+        [
+          gDistrictKV[data[i].district],
+          data[i].count
+        ]);
+    }
+
+    Highcharts.chart('chart-district',{
+        chart: {
+            type: 'bar',
+            backgroundColor:'rgba(255, 255, 255, 0.0)',
+            borderWidth:1,
+            borderColor:'black'
+        },
+        title: {
+            text: 'Requests by District'
+        },
+        xAxis: {
+            type: "category"
+        },
+        yAxis: {
+            min: 0,
+            title: {
+                text: 'Requests'
+            }
+        },
+        legend: {
+          enabled: false,
+        },
+        plotOptions: {
+            /*series: {
+                stacking: 'normal'
+            }*/
+        },
+            series: [{
+            name: 'District',
+            data: seriesData
+        }]
+    });
+  }
+
+getDistrictData();
+</script>
+{% endblock %}

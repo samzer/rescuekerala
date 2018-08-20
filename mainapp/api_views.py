@@ -1,9 +1,11 @@
-from .models import Person, RescueCamp
+from .models import Person, RescueCamp, Request
 from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import serializers
 from .models import RescueCamp, Person
+from django.db import connection
+
 
 class RescueCampSerializer(serializers.ModelSerializer):
     class Meta:
@@ -77,3 +79,31 @@ class CampList(APIView):
 
         else:
             return Response({'error' : 'District Code is Required'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+# Function for getting database connection and then doing query execution
+def execute_query(query):
+    with connection.cursor() as cursor:
+        cursor.execute(query)
+        description = cursor.description
+        rows = cursor.fetchall()
+        result = [dict(zip([column[0] for column in description], row)) for row in rows]
+    return result
+
+
+class RequestDashboardDistrictAPI(APIView):
+    permission_classes = ()
+    http_method_names = ['get']
+
+    def get(self, request):
+
+        query = '''
+        select district,
+            count(*) as count
+        from mainapp_request
+        group by district
+        '''
+
+        result = execute_query(query)
+
+        return Response(result, status=status.HTTP_200_OK)

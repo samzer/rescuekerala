@@ -136,6 +136,10 @@ class MapView(TemplateView):
     template_name = "mapview.html"
 
 
+class RequestDashboard(TemplateView):
+    template_name = "mainapp/request_dashboard.html"
+
+
 class ReqSuccess(TemplateView):
     template_name = "mainapp/req_success.html"
 

@@ -8,6 +8,8 @@ router.register(r'persons', api_views.PersonViewSet)
 
 urlpatterns = [
     path('camplist/', api_views.CampList.as_view(), name='api_camplist'),
+    path('request-dashboard/district/', api_views.RequestDashboardDistrictAPI.as_view(), name='api_request_dashboard_district'),
+
 ]
 
 urlpatterns += router.urls

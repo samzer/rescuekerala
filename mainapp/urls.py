@@ -14,6 +14,7 @@ urlpatterns = [
     path('NGO/download/', views.download_ngo_list, name='ngo_download_view'),
     path('requests/', views.request_list, name='requestlistview'),
     url(r'request_details/(?P<request_id>\d+)/$', views.request_details, name='requestdetailsview'),
+    path('request-dashboard/', views.RequestDashboard.as_view(), name='request_dashboard'),
     path('contactus/', views.districtmanager_list, name='contactus'),
     path('reg_success/', views.RegSuccess.as_view(), name='reg_successview'),
     path('req_sucess/', views.ReqSuccess.as_view(), name='req_sucessview'),
