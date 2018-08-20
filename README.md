@@ -150,7 +150,7 @@ That's it!
 <hr>
 
 ### Creating migration files
-[^toc](#creating-migration-files)
+[^toc](#table-of-contents)
 
 If your code changes anything in models.py, you might need to make changes in database schema, or other constraints. To create migrations files, run python3 manage.py makemigrations --settings=floodrelief.settings after making your changes. Also make sure to add these files in the commit.
 

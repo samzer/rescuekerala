@@ -1,6 +1,7 @@
 import csv
 
 from django.contrib import admin
+from django.core.validators import EMPTY_VALUES
 from django.http import HttpResponse
 
 from .models import Request, Volunteer, Contributor, DistrictNeed, DistrictCollection, DistrictManager, vol_categories, \
@@ -125,6 +126,14 @@ class RescueCampAdmin(admin.ModelAdmin):
                     'total_males', 'total_females', 'total_infants', 'food_req',
                     'clothing_req', 'sanitary_req', 'medical_req', 'other_req')
     list_filter = ('district','status')
+
+    def get_readonly_fields(self, request, obj=None):
+        fields = []
+
+        if obj not in EMPTY_VALUES and obj.status in ['closed', 'duplicate']:
+                fields = [i.name for i in obj._meta.fields if i.name not in ['status', 'data_entry_user']]
+
+        return fields
 
     def download_csv(self, request, queryset):
         header_row = ('district', 'name', 'location', 'taluk' , 'village' ,  'status', 'contacts', 'facilities_available', 'total_people',
