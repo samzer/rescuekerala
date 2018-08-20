@@ -102,6 +102,26 @@ class RequestDashboardDistrictAPI(APIView):
             count(*) as count
         from mainapp_request
         group by district
+        order by count(*) DESC
+        '''
+
+        result = execute_query(query)
+
+        return Response(result, status=status.HTTP_200_OK)
+
+class RequestDashboardLocationAPI(APIView):
+    permission_classes = ()
+    http_method_names = ['get']
+
+    def get(self, request):
+
+        query = '''
+        select location,
+            count(*) as count
+        from mainapp_request
+        group by location
+        order by count(*) DESC
+        limit 10
         '''
 
         result = execute_query(query)

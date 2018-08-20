@@ -10,23 +10,25 @@
   <div class="col-md-6">
     <div class="row">
       <div id="chart-district" style="min-width: 400px; height: 400px; margin: 0 auto">
-
       </div>
     </div>
     <div class="row">
-      Location Chart
+      <div id="chart-location" style="min-width: 400px; height: 400px; margin: 0 auto">
+      </div>
     </div>
   </div>
   <div class="col-md-6">
     <div class="row">
-      Map
-    </div>
+<div id='map' style='height: 800px;'></div>    </div>
   </div>
 
 </div>
 
 <script src="https://code.highcharts.com/highcharts.src.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.48.0/mapbox-gl.js'></script>
+<link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.48.0/mapbox-gl.css' rel='stylesheet' />
+
 <script type="text/javascript">
 /**************
 ** FUNCTIONS
@@ -47,7 +49,8 @@ var gDistrictKV = {
   'tcr':'Thrissur - തൃശ്ശൂർ',
   'wnd':'Wayanad - വയനാട്',
 }
-  // Metric Dashboard Filter//
+
+
   function getDistrictData(){
     var url = "/api/1/request-dashboard/district/";
 
@@ -109,6 +112,76 @@ var gDistrictKV = {
     });
   }
 
+
+  function getLocationData(){
+    var url = "/api/1/request-dashboard/location/";
+
+    $.ajax({
+      type: 'GET',
+      url: url,
+    })
+    .done(function(data) {
+      console.log(data);
+        displayLocationData(data);
+    })
+    .fail(function(xhr, errmsg, err) {
+      console.log("There was an error while getting data");
+    });
+  }
+
+
+  function displayLocationData(data) {
+    var seriesData = [];
+
+    for(var i in data){
+      seriesData.push(
+        [
+          data[i].location,
+          data[i].count
+        ]);
+    }
+
+    Highcharts.chart('chart-location',{
+        chart: {
+            type: 'bar',
+            backgroundColor:'rgba(255, 255, 255, 0.0)',
+            borderWidth:1,
+            borderColor:'black'
+        },
+        title: {
+            text: 'Requests by Location'
+        },
+        xAxis: {
+            type: "category"
+        },
+        yAxis: {
+            min: 0,
+            title: {
+                text: 'Requests'
+            }
+        },
+        legend: {
+          enabled: false,
+        },
+        plotOptions: {
+            /*series: {
+                stacking: 'normal'
+            }*/
+        },
+            series: [{
+            name: 'Location',
+            data: seriesData
+        }]
+    });
+  }
+
+  mapboxgl.accessToken = 'pk.eyJ1Ijoic2FtemVyIiwiYSI6ImNqbDIxeDllejBxMDkzb3F5NnFzbnpxa2YifQ.Fb7hT17qa_5Sw52fXWkq3g';
+  var map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/mapbox/streets-v9'
+  });
+
 getDistrictData();
+getLocationData();
 </script>
 {% endblock %}
