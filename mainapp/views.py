@@ -138,7 +138,11 @@ class MapView(TemplateView):
 
 class RequestDashboard(TemplateView):
     template_name = "mainapp/request_dashboard.html"
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
 
+        context['mapbox_access_key'] = settings.MAPBOX_ACCESS_KEY
+        return context
 
 class ReqSuccess(TemplateView):
     template_name = "mainapp/req_success.html"

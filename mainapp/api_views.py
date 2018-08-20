@@ -127,3 +127,19 @@ class RequestDashboardLocationAPI(APIView):
         result = execute_query(query)
 
         return Response(result, status=status.HTTP_200_OK)
+
+
+class RequestDashboardMapSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Request
+        fields = ('id', 'latlng', 'latlng_accuracy', 'location', 'requestee')
+
+
+class RequestDashboardMapAPI(APIView):
+    permission_classes = ()
+    http_method_names = ['get']
+
+    def get(self, request):
+        result = Request.objects.all()[:300]
+        serializer = RequestDashboardMapSerializer(result, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

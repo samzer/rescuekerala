@@ -235,3 +235,6 @@ REST_FRAMEWORK = {
         'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
     ),
 }
+
+# Mapbox
+MAPBOX_ACCESS_KEY=env('MAPBOX_ACCESS_KEY')

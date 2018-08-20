@@ -121,7 +121,6 @@ var gDistrictKV = {
       url: url,
     })
     .done(function(data) {
-      console.log(data);
         displayLocationData(data);
     })
     .fail(function(xhr, errmsg, err) {
@@ -175,13 +174,106 @@ var gDistrictKV = {
     });
   }
 
-  mapboxgl.accessToken = 'pk.eyJ1Ijoic2FtemVyIiwiYSI6ImNqbDIxeDllejBxMDkzb3F5NnFzbnpxa2YifQ.Fb7hT17qa_5Sw52fXWkq3g';
+  function getMapData(){
+    var url = "/api/1/request-dashboard/map/";
+
+    $.ajax({
+      type: 'GET',
+      url: url,
+    })
+    .done(function(data) {
+      displayMap(data);
+    })
+    .fail(function(xhr, errmsg, err) {
+      console.log("There was an error while getting data");
+    });
+  }
+
+
+function displayMap(data){
+  mapboxgl.accessToken = '{{ mapbox_access_key }}';
   var map = new mapboxgl.Map({
       container: 'map',
-      style: 'mapbox://styles/mapbox/streets-v9'
+      style: 'mapbox://styles/mapbox/light-v9',
+      center: [75.6372503, 10.0691346],
+      zoom: 7
   });
+
+  map.on('load', function() {
+
+    for(var i in data){
+      var latlng = data[i].latlng.split(",").map(parseFloat)
+
+
+      map.addLayer({
+        id: data[i].id.toString(),
+        type: 'circle',
+        source: { type: 'geojson',
+                data: {
+                "type": "Feature",
+                "geometry": {
+                  "type": "Point",
+                  "coordinates": [latlng[1], latlng[0]]
+                },
+                "properties": {
+                  "requestee": data[i].requestee,
+                  "location": data[i].location,
+                  "accuracy": data[i].latlng_accuracy,
+                  "id": data[i].id,
+                }
+              }
+        },
+        paint: {
+          'circle-radius': 8,
+          'circle-opacity': 0.8,
+          'circle-color': 'rgb(171, 72, 33)'
+        }
+      });
+
+    }
+
+    // When a click event occurs near a place, open a popup at the location of
+    // the feature, with HTML description from its properties
+    map.on('click', function(e) {
+      var features = map.queryRenderedFeatures(e.point);
+      // if the features have no info, return nothing
+      if (!features.length) {
+        return;
+      }
+
+      var feature = features[0];
+
+      // Populate the popup and set its coordinates
+      // based on the feature found
+      var popup = new mapboxgl.Popup()
+      .setLngLat(feature.geometry.coordinates)
+      .setHTML('<div id=\'popup\' class=\'popup\' style=\'z-index: 10;\'> <h5> Detail: </h5>' +
+      '<ul class=\'list-group\'>' +
+      '<li class=\'list-group-item\'> <b>Requestee:</b> ' + feature.properties['requestee'] + ' </li>' +
+      '<li class=\'list-group-item\'> <b>Location:</b> ' + feature.properties['location'] + ' </li>' +
+      '<li class=\'list-group-item\'><b> GPS Accuracy:</b> ' + feature.properties['accuracy'] + ' </li>' +
+      '<li class=\'list-group-item\'> <a href="/request_details/' + feature.properties['id'] + '/"> More details> </a> </li>' +
+
+      // '<li class=\'list-group-item\'> Vehicle Count: ' + feature.properties['8HrVehVol'] + ' </li>' +
+      // '<li class=\'list-group-item\'> Pedestrian Count: ' + feature.properties['8HrPedVol'] + ' </li>' +
+      '</ul></div>')
+      .addTo(map);
+    });
+
+
+
+  });
+}
 
 getDistrictData();
 getLocationData();
+getMapData();
 </script>
+<style>
+.mapboxgl-popup {
+  max-width: 400px;
+  font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+}
+
+</style>
 {% endblock %}
